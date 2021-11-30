@@ -11,11 +11,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping()
+@RequestMapping
 public class UserController {
     private final UserService userService;
     private static final Logger log = LogManager.getLogger(UserController.class);
@@ -24,48 +23,42 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/admin/user")
-    public ResponseEntity<List<UserPrintDto>> getAllUser() {
-        List<UserPrintDto> userPrintDtoList = userService.getAllUser();
-        return userPrintDtoList != null
-                ? new ResponseEntity<>(userPrintDtoList, HttpStatus.OK)
-                : new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @GetMapping("/user")
+    public ResponseEntity<UserPrintDto> getUser() {
+        UserPrintDto user = userService.getCurrentUserForPrint();
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable(name = "id") Integer userId, @Valid @RequestBody UserDto user) {
+        //действие - обновить бронь
+        log.info(String.format("Try create user with name[%s] ID[%d]", user.getName(), userId));
+        userService.update(userId, user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/successLogout")
+    public ResponseEntity<String> logout() {
+        return new ResponseEntity<>("Logout success", HttpStatus.OK);
     }
 
     @PostMapping("/user/registration")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserDto user) {
         //действие - создать бронь
         log.info(String.format("Try create user with name[%s]", user.getName()));
-        try {
-            userService.saveUser(user);
-            return new ResponseEntity<>(HttpStatus.CREATED);
-        } catch (Exception e) {
-            log.error(e);
-            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
-        }
-    }
-
-    @PutMapping(value = "/admin/user/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable(name = "id") Integer userId, @Valid @RequestBody UserDto user) {
-        //действие - обновить бронь
-        log.info(String.format("Try create user with name[%s] ID[%d]", user.getName(), userId));
-        try {
-            userService.update(userId, user);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            log.error(e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        userService.saveUser(user);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @DeleteMapping(value = "/admin/user/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable(name = "id") int id) {
-        try {
-            userService.delete(id);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            log.error(e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        userService.delete(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleException(Exception e) {
+        log.error(e);
+        return new ResponseEntity<>("Exception message: " + e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

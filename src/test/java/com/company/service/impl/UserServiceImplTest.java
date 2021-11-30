@@ -88,13 +88,7 @@ class UserServiceImplTest {
     @Test
     void getAllUserWithAdmin() {
         when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2, user3));
-        assertThat(userService.getAllUser()).isEqualTo(Arrays.asList(userPrintDto1, userPrintDto2, userPrintDto3));
-    }
-
-    @Test
-    void userToUserPrintDto() {
-        when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2, user3));
-        assertThat(userService.userToUserPrintDto()).isEqualTo(Arrays.asList(userPrintDto1, userPrintDto2, userPrintDto3));
+        assertThat(userService.getAllUserPrintDto()).isEqualTo(Arrays.asList(userPrintDto1, userPrintDto2, userPrintDto3));
     }
 
     @Test

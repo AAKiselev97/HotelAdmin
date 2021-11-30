@@ -4,6 +4,7 @@ import com.company.dto.user.UserDto;
 import com.company.dto.user.UserPrintDto;
 import com.company.exception.CustomException;
 import com.company.exception.WrongIdException;
+import com.company.mapper.UserMapperUtil;
 import com.company.model.Role;
 import com.company.model.User;
 import com.company.repository.RoleRepository;
@@ -18,11 +19,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -63,6 +61,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public void update(int userId, UserDto userDto) throws UsernameNotFoundException {
+        if (userDto.getId().equals(userId) && getCurrentUser().getId().equals(userId)){
+            log.error("Not enough rights");
+            throw new CustomException("Not enough rights");
+        }
         User userFromDB = userRepository.findByUsername(userDto.getUsername());
         if (userFromDB == null) {
             log.error("User not found");
@@ -76,22 +78,24 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public List<UserPrintDto> getAllUser() {
-        return userToUserPrintDto();
-    }
-
-    public List<UserPrintDto> userToUserPrintDto() {
-        return userRepository.findAll().stream().map(user -> UserPrintDto.builder().id(user.getId()).name(user.getName()).build()).collect(Collectors.toList());
+    public List<UserPrintDto> getAllUserPrintDto() {
+        return UserMapperUtil.userListToUserPrintDtoList(getAll());
     }
 
     public User getById(int id) {
         try {
             User user = userRepository.getById(id);
-            log.info("get" + user);
+            log.info("get user by ID" + user.getId());
             return user;
-        } catch (EntityNotFoundException e){
+        } catch (Exception e) {
             throw new WrongIdException("Incorrect userId:" + id);
         }
+    }
+
+    @Override
+    public UserPrintDto getCurrentUserForPrint() {
+        User user = getCurrentUser();
+        return UserPrintDto.builder().id(user.getId()).name(user.getName()).roles(user.getRoles()).build();
     }
 
     @Override
@@ -108,5 +112,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public void delete(int id) {
         userRepository.deleteById(id);
+    }
+
+    private List<User> getAll() {
+        return userRepository.findAll();
     }
 }

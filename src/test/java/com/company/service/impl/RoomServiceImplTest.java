@@ -66,13 +66,7 @@ class RoomServiceImplTest {
     @Test
     void getAllRoom() {
         when(roomRepository.findAll()).thenReturn(Arrays.asList(room1, room2, room3));
-        assertThat(roomService.getAllRoom()).isEqualTo(Arrays.asList(printDto1, printDto2, printDto3));
-    }
-
-    @Test
-    void roomToRoomPrintDto() {
-        when(roomRepository.findAll()).thenReturn(Arrays.asList(room1, room2, room3));
-        assertThat(roomService.roomToRoomPrintDto()).isEqualTo(Arrays.asList(printDto1, printDto2, printDto3));
+        assertThat(roomService.getAllRoomPrintDto()).isEqualTo(Arrays.asList(printDto1, printDto2, printDto3));
     }
 
     @Test
@@ -83,11 +77,6 @@ class RoomServiceImplTest {
 
     @Test
     void getByInvalidId() {
-        assertThrows(WrongIdException.class, () -> roomService.getById(1));
-    }
-
-    @Test
-    void checkInvalidUserId() {
         assertThrows(WrongIdException.class, () -> roomService.getById(1));
     }
 }

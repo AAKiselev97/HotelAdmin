@@ -9,11 +9,14 @@ import com.company.model.*;
 import com.company.repository.BookingRepository;
 import com.company.service.RoomService;
 import com.company.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,14 +35,20 @@ class BookingServiceImplTest {
     private RoomService roomService;
     @Mock
     private UserService userService;
+    @Mock
+    private RestTemplate restTemplate;
+    @Mock
+    private ObjectMapper objectMapper;
+    @Mock
+    private KafkaTemplate<String, String> kafkaTemplate;
     @InjectMocks
     private BookingServiceImpl bookingService;
 
-    private final Booking booking1 = new Booking(1, 2, 1, true, LocalDateTime.now(), LocalDateTime.MAX);
+    private final Booking booking1 = new Booking(1, 2, 1, true, LocalDateTime.now(), LocalDateTime.MAX, "source");
     private final Booking booking2 = new Booking(2, 2, 2, false,
-            LocalDateTime.of(2022, 8, 24, 14, 0), LocalDateTime.of(2022, 9, 24, 12, 0));
+            LocalDateTime.of(2022, 8, 24, 14, 0), LocalDateTime.of(2022, 9, 24, 12, 0), "source");
     private final Booking booking3 = new Booking(3, 3, 3, false,
-            LocalDateTime.of(2022, 8, 26, 14, 0), LocalDateTime.of(2022, 9, 22, 12, 0));
+            LocalDateTime.of(2022, 8, 26, 14, 0), LocalDateTime.of(2022, 9, 22, 12, 0), "source");
     private final BookingPrintDto bookingPrintDto1 = BookingPrintDto.builder().id(booking1.getId()).roomId(booking1.getRoomId())
             .roomNumber(2).visitorId(booking1.getVisitorId()).visitorName("test1").canceled(true).checkInTime(booking1.getCheckInTime())
             .checkOutTime(booking1.getCheckOutTime()).build();
@@ -67,7 +76,7 @@ class BookingServiceImplTest {
         when(roomService.getById(2)).thenReturn(new Room(1, 200, RoomStatus.AVAILABLE, 2));
         when(userService.getById(1)).thenReturn(user);
         Booking bookingInService = new Booking(bookingDto1.getRoomId(), bookingDto1.getVisitorId(), bookingDto1.getCheckInTime(), bookingDto1.getCheckOutTime());
-        Booking bookingInRepositories = new Booking(1, bookingDto1.getRoomId(), bookingDto1.getVisitorId(), false, bookingInService.getCheckInTime(), bookingInService.getCheckOutTime());
+        Booking bookingInRepositories = new Booking(1, bookingDto1.getRoomId(), bookingDto1.getVisitorId(), false, bookingInService.getCheckInTime(), bookingInService.getCheckOutTime(), "source");
         when(bookingRepository.save(bookingInService)).thenReturn(bookingInRepositories);
         bookingService.saveBooking(bookingDto1);
     }
@@ -87,9 +96,8 @@ class BookingServiceImplTest {
     @Test
     void saveBookingWhenCheckInBeforeCurrentDate() {
         when(userService.getCurrentUser()).thenReturn(admin);
-        BookingDto bookingDto = bookingDtoWrongDate;
         bookingDtoWrongDate.setCheckInTime(LocalDate.MIN);
-        assertThrows(CustomException.class, () -> bookingService.saveBooking(bookingDto));
+        assertThrows(CustomException.class, () -> bookingService.saveBooking(bookingDtoWrongDate));
     }
 
     @Test
@@ -122,9 +130,8 @@ class BookingServiceImplTest {
     @Test
     void updateBookingWhenCheckInBeforeCurrentDate() {
         when(userService.getCurrentUser()).thenReturn(admin);
-        BookingDto bookingDto = bookingDtoWrongDate;
         bookingDtoWrongDate.setCheckInTime(LocalDate.MIN);
-        assertThrows(CustomException.class, () -> bookingService.update(3, bookingDto));
+        assertThrows(CustomException.class, () -> bookingService.update(3, bookingDtoWrongDate));
     }
 
     @Test
@@ -143,27 +150,26 @@ class BookingServiceImplTest {
         assertThrows(CustomException.class, () -> bookingService.update(1, bookingDto1));
     }
 
-
     @Test
     void getAllBookingForAdmin() {
         when(userService.getCurrentUser()).thenReturn(admin);
         when(bookingRepository.findAll()).thenReturn(Arrays.asList(booking1, booking2, booking3));
-        when(userService.getAllUser()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
+        when(userService.getAllUserPrintDto()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
                 UserPrintDto.builder().id(2).name("test2").build(), UserPrintDto.builder().id(3).name("test3").build()));
-        when(roomService.getAllRoom()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
+        when(roomService.getAllRoomPrintDto()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
                 RoomPrintDto.builder().id(2).roomNumber(2).build(), RoomPrintDto.builder().id(3).roomNumber(3).build()));
-        assertThat(bookingService.getAllBooking()).isEqualTo(Arrays.asList(bookingPrintDto1, bookingPrintDto2, bookingPrintDto3));
+        assertThat(bookingService.getAllBookingPrintDtoForAdmin()).isEqualTo(Arrays.asList(bookingPrintDto1, bookingPrintDto2, bookingPrintDto3));
     }
 
     @Test
     void getAllBookingForUser() {
         when(userService.getCurrentUser()).thenReturn(user);
         when(bookingRepository.findAll()).thenReturn(Arrays.asList(booking1, booking2, booking3));
-        when(userService.getAllUser()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
+        when(userService.getAllUserPrintDto()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
                 UserPrintDto.builder().id(2).name("test2").build(), UserPrintDto.builder().id(3).name("test3").build()));
-        when(roomService.getAllRoom()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
+        when(roomService.getAllRoomPrintDto()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
                 RoomPrintDto.builder().id(2).roomNumber(2).build(), RoomPrintDto.builder().id(3).roomNumber(3).build()));
-        assertThat(bookingService.getAllBooking()).isEqualTo(Arrays.asList(bookingPrintDto1));
+        assertThat(bookingService.getAllBookingPrintDtoForUser()).isEqualTo(Arrays.asList(bookingPrintDto1));
     }
 
     @Test
@@ -171,5 +177,11 @@ class BookingServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(user);
         when(bookingRepository.getById(2)).thenReturn(booking3);
         assertThrows(CustomException.class, () -> bookingService.delete(2));
+    }
+
+    @Test
+    void getReceiptWhenReceiptNotFound() {
+        when(userService.getCurrentUser()).thenReturn(user);
+        assertThrows(CustomException.class, () -> bookingService.getReceipt(3));
     }
 }

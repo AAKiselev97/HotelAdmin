@@ -10,7 +10,7 @@ public interface UserService {
 
     void saveUser(UserDto userDto);
 
-    List<UserPrintDto> getAllUser();
+    List<UserPrintDto> getAllUserPrintDto();
 
     void update(int userId, UserDto userDto);
 
@@ -21,4 +21,6 @@ public interface UserService {
     void checkUserId(int userId);
 
     User getCurrentUser();
+
+    UserPrintDto getCurrentUserForPrint();
 }

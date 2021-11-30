@@ -16,4 +16,5 @@ public class BookingPrintDto {
     private Boolean canceled;
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
+    private String source;
 }

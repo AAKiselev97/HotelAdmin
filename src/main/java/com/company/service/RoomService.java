@@ -12,7 +12,7 @@ public interface RoomService {
 
     void update(int id, RoomDto roomDto);
 
-    List<RoomPrintDto> getAllRoom();
+    List<RoomPrintDto> getAllRoomPrintDto();
 
     Room getById(int id);
 

@@ -33,6 +33,8 @@ public class Booking implements Serializable {
     //время выселения
     @Column(name = "check_out_time", nullable = false)
     private LocalDateTime checkOutTime;
+    @Column(name = "source")
+    private String source;
 
     public Booking(int roomId, int visitorId, LocalDate checkInTime, LocalDate checkOutTime) {
         this.roomId = roomId;

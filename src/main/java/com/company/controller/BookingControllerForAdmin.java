@@ -18,45 +18,45 @@ import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping("/booking")
-public class BookingController {
+@RequestMapping("/admin/booking")
+public class BookingControllerForAdmin {
     private final BookingService bookingService;
-    private static final Logger log = LogManager.getLogger(BookingController.class);
+    private static final Logger log = LogManager.getLogger(BookingControllerForAdmin.class);
 
-    public BookingController(BookingService bookingService) {
+    public BookingControllerForAdmin(BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingPrintDto>> getAllBookingForUser() {
-        List<BookingPrintDto> bookingPrintDtoList = bookingService.getAllBookingPrintDtoForUser();
+    public ResponseEntity<List<BookingPrintDto>> getAllBookingForAdmin() {
+        List<BookingPrintDto> bookingPrintDtoList = bookingService.getAllBookingPrintDtoForAdmin();
         return new ResponseEntity<>(bookingPrintDtoList, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{id}", produces = {MediaType.TEXT_PLAIN_VALUE})
+    public ResponseEntity<Resource> getReceipt(@PathVariable(name = "id") Integer bookingId) throws FileNotFoundException {
+        return new ResponseEntity<>(bookingService.getReceiptForAdmin(bookingId), HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<?> createBooking(@Valid @RequestBody BookingDto booking) {
         //действие - создать бронь
         log.info("Try create " + booking);
-        bookingService.saveBooking(booking);
+        bookingService.saveBookingForAdmin(booking);
         return new ResponseEntity<>(HttpStatus.CREATED);
-    }
-
-    @GetMapping(value = "/{id}", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public ResponseEntity<Resource> getReceipt(@PathVariable(name = "id") Integer bookingId) throws FileNotFoundException {
-        return new ResponseEntity<>(bookingService.getReceipt(bookingId), HttpStatus.OK);
     }
 
     @PutMapping(value = "/{id}")
     public ResponseEntity<?> updateBooking(@PathVariable(name = "id") Integer bookingId, @Valid @RequestBody BookingDto booking) {
         //действие - обновить бронь
         log.info("Try update " + booking + " [ID]" + bookingId);
-        bookingService.update(bookingId, booking);
+        bookingService.updateForAdmin(bookingId, booking);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<?> deleteBooking(@PathVariable(name = "id") int id) {
-        bookingService.delete(id);
+        bookingService.deleteForAdmin(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
