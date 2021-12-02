@@ -35,9 +35,9 @@ class UserServiceImplTest {
     private final User user1 = new User(1, "test1", "test_name1", "test_password1", Collections.singleton(new Role(1, "ROLE_USER")));
     private final User user2 = new User(1, "test2", "test_name2", "test_password2", Collections.singleton(new Role(1, "ROLE_USER")));
     private final User user3 = new User(1, "test3", "test_name3", "test_password3", Collections.singleton(new Role(1, "ROLE_ADMIN")));
-    private final UserPrintDto userPrintDto1 = UserPrintDto.builder().id(user1.getId()).name(user1.getName()).build();
-    private final UserPrintDto userPrintDto2 = UserPrintDto.builder().id(user2.getId()).name(user2.getName()).build();
-    private final UserPrintDto userPrintDto3 = UserPrintDto.builder().id(user3.getId()).name(user3.getName()).build();
+    private final UserPrintDto userPrintDto1 = UserPrintDto.builder().id(user1.getId()).name(user1.getName()).roles(Collections.singleton(new Role(1, "ROLE_USER"))).build();
+    private final UserPrintDto userPrintDto2 = UserPrintDto.builder().id(user2.getId()).name(user2.getName()).roles(Collections.singleton(new Role(1, "ROLE_USER"))).build();
+    private final UserPrintDto userPrintDto3 = UserPrintDto.builder().id(user3.getId()).name(user3.getName()).roles(Collections.singleton(new Role(1, "ROLE_ADMIN"))).build();
 
     @BeforeEach
     public void init() {
@@ -73,16 +73,7 @@ class UserServiceImplTest {
         when(userRepository.findByUsername("test_name1")).thenReturn(null);
         UserDto userDto = new UserDto();
         userDto.setUsername("test_name1");
-        assertThrows(UsernameNotFoundException.class, () -> userService.update(1, userDto));
-    }
-
-    @Test
-    void update() {
-        when(userRepository.findByUsername("test_name1")).thenReturn(user1);
-        when(bCryptPasswordEncoder.encode("test_password1")).thenReturn("test_password1");
-        when(userRepository.save(user1)).thenReturn(user1);
-        UserDto userDto = new UserDto(1, "test1", "test_name1", "test_password1");
-        userService.update(1, userDto);
+        assertThrows(NullPointerException.class, () -> userService.update(1, userDto));
     }
 
     @Test

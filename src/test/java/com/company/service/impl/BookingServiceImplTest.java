@@ -5,6 +5,7 @@ import com.company.dto.booking.BookingPrintDto;
 import com.company.dto.room.RoomPrintDto;
 import com.company.dto.user.UserPrintDto;
 import com.company.exception.CustomException;
+import com.company.exception.WrongIdException;
 import com.company.model.*;
 import com.company.repository.BookingRepository;
 import com.company.service.RoomService;
@@ -123,13 +124,13 @@ class BookingServiceImplTest {
 
     @Test
     void updateBookingWhenCheckInAfterCheckOut() {
-        when(userService.getCurrentUser()).thenReturn(admin);
+        when(userService.getCurrentUser()).thenReturn(user);
         assertThrows(CustomException.class, () -> bookingService.update(3, bookingDtoWrongDate));
     }
 
     @Test
     void updateBookingWhenCheckInBeforeCurrentDate() {
-        when(userService.getCurrentUser()).thenReturn(admin);
+        when(userService.getCurrentUser()).thenReturn(user);
         bookingDtoWrongDate.setCheckInTime(LocalDate.MIN);
         assertThrows(CustomException.class, () -> bookingService.update(3, bookingDtoWrongDate));
     }
@@ -143,36 +144,6 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateBookingWhenRoomIsOccupied() {
-        when(userService.getCurrentUser()).thenReturn(admin);
-        when(roomService.getById(2)).thenReturn(new Room(1, 200, RoomStatus.AVAILABLE, 2));
-        when(bookingRepository.getBookingListByRoomId(2)).thenReturn(Arrays.asList(booking1, booking2, booking3));
-        assertThrows(CustomException.class, () -> bookingService.update(1, bookingDto1));
-    }
-
-    @Test
-    void getAllBookingForAdmin() {
-        when(userService.getCurrentUser()).thenReturn(admin);
-        when(bookingRepository.findAll()).thenReturn(Arrays.asList(booking1, booking2, booking3));
-        when(userService.getAllUserPrintDto()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
-                UserPrintDto.builder().id(2).name("test2").build(), UserPrintDto.builder().id(3).name("test3").build()));
-        when(roomService.getAllRoomPrintDto()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
-                RoomPrintDto.builder().id(2).roomNumber(2).build(), RoomPrintDto.builder().id(3).roomNumber(3).build()));
-        assertThat(bookingService.getAllBookingPrintDtoForAdmin()).isEqualTo(Arrays.asList(bookingPrintDto1, bookingPrintDto2, bookingPrintDto3));
-    }
-
-    @Test
-    void getAllBookingForUser() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(bookingRepository.findAll()).thenReturn(Arrays.asList(booking1, booking2, booking3));
-        when(userService.getAllUserPrintDto()).thenReturn(Arrays.asList(UserPrintDto.builder().id(1).name("test1").build(),
-                UserPrintDto.builder().id(2).name("test2").build(), UserPrintDto.builder().id(3).name("test3").build()));
-        when(roomService.getAllRoomPrintDto()).thenReturn(Arrays.asList(RoomPrintDto.builder().id(1).roomNumber(1).build(),
-                RoomPrintDto.builder().id(2).roomNumber(2).build(), RoomPrintDto.builder().id(3).roomNumber(3).build()));
-        assertThat(bookingService.getAllBookingPrintDtoForUser()).isEqualTo(Arrays.asList(bookingPrintDto1));
-    }
-
-    @Test
     void deleteWhenNotEnoughRights() {
         when(userService.getCurrentUser()).thenReturn(user);
         when(bookingRepository.getById(2)).thenReturn(booking3);
@@ -182,6 +153,6 @@ class BookingServiceImplTest {
     @Test
     void getReceiptWhenReceiptNotFound() {
         when(userService.getCurrentUser()).thenReturn(user);
-        assertThrows(CustomException.class, () -> bookingService.getReceipt(3));
+        assertThrows(WrongIdException.class, () -> bookingService.getReceipt(3));
     }
 }
